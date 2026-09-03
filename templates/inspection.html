@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="/history" class="text-info text-decoration-none small"><i class="bi bi-arrow-left me-1"></i> Back to History</a>
+</div>
+
+<div class="glass-card p-4 mb-4">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <h3 class="fw-bold mb-0">Inspection #{{ inspection.id }}</h3>
+    <div>
+      <a href="/report/{{ inspection.id }}" class="btn btn-sm btn-cyan-gradient"><i class="bi bi-file-earmark-pdf me-1"></i> PDF Report</a>
+    </div>
+  </div>
+
+  <p class="text-secondary small mb-2"><strong>Product:</strong> {{ inspection.product_name or 'N/A' }} | <strong>Manufacturer:</strong> {{ inspection.manufacturer_name or 'N/A' }}</p>
+  <p class="text-secondary small mb-0"><strong>Score:</strong> {{ inspection.compliance_score }}% | <strong>Status:</strong> {{ inspection.overall_status }}</p>
+</div>
+
+<div class="glass-card p-4">
+  <h5 class="fw-bold mb-3">Extracted Fields</h5>
+  <div class="table-responsive">
+    <table class="table table-custom align-middle">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Value</th>
+          <th>Status</th>
+          <th>Validation Message</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in fields %}
+        <tr>
+          <td>{{ f.field_name.replace('_', ' ').title() }}</td>
+          <td class="font-monospace text-info">{{ f.extracted_value or '-' }}</td>
+          <td><span class="badge bg-dark border text-light">{{ f.status }}</span></td>
+          <td class="text-secondary small">{{ f.validation_message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

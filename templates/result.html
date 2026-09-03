@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mb-4">
+  <div class="col-lg-11">
+    
+    <!-- Header Banner -->
+    <div class="glass-card p-4 mb-4">
+      <div class="row align-items-center">
+        
+        <!-- Score Gauge -->
+        <div class="col-md-3 text-center mb-3 mb-md-0">
+          <div class="score-circle mb-2" style="--score-pct: {{ inspection.compliance_score }};">
+            {{ inspection.compliance_score }}%
+          </div>
+          <span class="text-white small fw-bold text-uppercase">Compliance Score</span>
+        </div>
+
+        <!-- Details & Status -->
+        <div class="col-md-6 mb-3 mb-md-0">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            {% if inspection.overall_status == 'COMPLIANT' %}
+              <span class="badge-status badge-compliant"><i class="bi bi-check-circle-fill me-1"></i> COMPLIANT</span>
+            {% elif inspection.overall_status == 'NEEDS REVIEW' %}
+              <span class="badge-status badge-review"><i class="bi bi-exclamation-triangle-fill me-1"></i> NEEDS REVIEW</span>
+            {% else %}
+              <span class="badge-status badge-non-compliant"><i class="bi bi-x-circle-fill me-1"></i> NON-COMPLIANT</span>
+            {% endif %}
+          </div>
+
+          <h3 class="fw-bold mb-1 text-white">{{ inspection.product_name or 'Unidentified Product' }}</h3>
+          <p class="text-white-50 mb-0">
+            <strong class="text-white">Manufacturer:</strong> {{ inspection.manufacturer_name or 'Not specified' }} &bull; 
+            <strong class="text-white">Inspection ID:</strong> #{{ inspection.id }}
+          </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="col-md-3 text-md-end">
+          <a href="/report/{{ inspection.id }}" class="btn btn-cyan-gradient mb-2 w-100 text-center text-white">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF Report
+          </a>
+          <a href="/" class="btn btn-sm btn-outline-light w-100 text-white">
+            <i class="bi bi-arrow-left me-1"></i> Scan Another Item
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Product Details Card -->
+    {% if inspection.image_url or inspection.api_source or inspection.barcode %}
+    <div class="glass-card p-4 mb-4">
+      <div class="row align-items-center">
+        {% if inspection.image_url %}
+        <div class="col-md-2 text-center mb-3 mb-md-0">
+          <img src="{{ inspection.image_url }}" alt="Product Image" class="img-fluid rounded border border-secondary p-1" style="max-height: 110px; object-fit: contain;">
+        </div>
+        {% endif %}
+        <div class="col-md">
+          <h5 class="fw-bold mb-1 text-white"><i class="bi bi-box-seam text-info me-2"></i> {{ inspection.product_name }}</h5>
+          <p class="text-white-50 small mb-1">
+            <strong class="text-white">Brand / Manufacturer:</strong> {{ inspection.manufacturer_name or 'N/A' }} | 
+            <strong class="text-white">Barcode / GTIN:</strong> {{ inspection.barcode or 'N/A' }}
+          </p>
+          {% if inspection.product_description %}
+            <p class="text-white-50 small mb-0">{{ inspection.product_description }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Label Declaration Field Table -->
+    <div class="glass-card p-4 mb-4">
+      <h5 class="fw-bold mb-3 text-white"><i class="bi bi-card-checklist text-cyan me-2"></i> Product Label Check Results</h5>
+      
+      <div class="table-responsive">
+        <table class="table table-custom align-middle text-white">
+          <thead>
+            <tr>
+              <th class="text-white fw-bold">Required Label Field</th>
+              <th class="text-white fw-bold">Extracted Value</th>
+              <th class="text-white fw-bold">Status</th>
+              <th class="text-white fw-bold">Check Summary</th>
+            </tr>
+          </thead>
+          <tbody class="text-white">
+            {% for f in fields %}
+            <tr class="text-white">
+              <td class="fw-bold text-white">{{ f.field_name.replace('_', ' ').title() }}</td>
+              <td>
+                {% if f.extracted_value %}
+                  <span class="badge bg-dark border border-secondary text-white font-monospace fs-7 px-2 py-1">{{ f.extracted_value }}</span>
+                {% else %}
+                  <span class="text-white-50 fst-italic small">Not Detected</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if f.status == 'PASS' %}
+                  <span class="badge bg-success text-white px-2 py-1">PASS</span>
+                {% elif f.status == 'REVIEW' %}
+                  <span class="badge bg-warning text-dark fw-bold px-2 py-1">NEEDS REVIEW</span>
+                {% elif f.status == 'MISSING' %}
+                  <span class="badge bg-danger text-white px-2 py-1">MISSING</span>
+                {% else %}
+                  <span class="badge bg-danger text-white px-2 py-1">INVALID</span>
+                {% endif %}
+              </td>
+              <td class="text-white-50 small">{{ f.validation_message }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Raw OCR Text Card -->
+    {% if inspection.cleaned_ocr_text %}
+    <div class="glass-card p-4">
+      <h5 class="fw-bold mb-3 text-white"><i class="bi bi-file-text text-warning me-2"></i> Extracted Label Text</h5>
+      <div class="ocr-block">{{ inspection.cleaned_ocr_text }}</div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

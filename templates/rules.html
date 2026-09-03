@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <h2 class="fw-bold mb-1 text-white">Product Label Declaration Rules</h2>
+  <p class="text-white-50 small fs-6">Mandatory items that must be printed on pre-packaged commodity labels.</p>
+</div>
+
+<div class="glass-card p-4 mb-4">
+  <h5 class="fw-bold mb-3 text-white"><i class="bi bi-book text-info me-2"></i> Mandatory Label Items</h5>
+  
+  <div class="table-responsive">
+    <table class="table table-custom align-middle text-white">
+      <thead>
+        <tr>
+          <th class="text-white fw-bold">Required Label Item</th>
+          <th class="text-white fw-bold">Description</th>
+          <th class="text-white fw-bold">Status</th>
+        </tr>
+      </thead>
+      <tbody class="text-white">
+        <tr>
+          <td class="fw-bold text-white">Product Name</td>
+          <td class="text-white-50 small">The common or generic name of the item.</td>
+          <td><span class="badge bg-danger text-light px-2 py-1">Mandatory</span></td>
+        </tr>
+        <tr>
+          <td class="fw-bold text-white">Manufacturer Details</td>
+          <td class="text-white-50 small">Full name and complete address of manufacturer, packer, or importer.</td>
+          <td><span class="badge bg-danger text-light px-2 py-1">Mandatory</span></td>
+        </tr>
+        <tr>
+          <td class="fw-bold text-white">Net Quantity & Unit</td>
+          <td class="text-white-50 small">Net weight or volume in standard metric units (g, kg, ml, L).</td>
+          <td><span class="badge bg-danger text-light px-2 py-1">Mandatory</span></td>
+        </tr>
+        <tr>
+          <td class="fw-bold text-white">Manufacturing & Expiry Dates</td>
+          <td class="text-white-50 small">Month and year of packing and Expiry Date / Best Before declaration.</td>
+          <td><span class="badge bg-danger text-light px-2 py-1">Mandatory</span></td>
+        </tr>
+        <tr>
+          <td class="fw-bold text-white">Maximum Retail Price (MRP)</td>
+          <td class="text-white-50 small">MRP in Rupees (₹/Rs.) inclusive of all taxes.</td>
+          <td><span class="badge bg-danger text-light px-2 py-1">Mandatory</span></td>
+        </tr>
+        <tr>
+          <td class="fw-bold text-white">Batch / Lot Number</td>
+          <td class="text-white-50 small">Batch, lot, or code number for product tracking.</td>
+          <td><span class="badge bg-danger text-light px-2 py-1">Mandatory</span></td>
+        </tr>
+        <tr>
+          <td class="fw-bold text-white">Country of Origin</td>
+          <td class="text-white-50 small">Country where the product was made or imported from.</td>
+          <td><span class="badge bg-danger text-light px-2 py-1">Mandatory</span></td>
+        </tr>
+        <tr>
+          <td class="fw-bold text-white">Customer Care Helpline</td>
+          <td class="text-white-50 small">Name, address, phone number, or email for customer complaints.</td>
+          <td><span class="badge bg-danger text-light px-2 py-1">Mandatory</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

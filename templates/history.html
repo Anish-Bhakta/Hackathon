@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <h2 class="fw-bold mb-1 text-white">Inspection History</h2>
+    <p class="text-white-50 small mb-0">Browse all previous package screening logs.</p>
+  </div>
+  <a href="/" class="btn btn-primary-gradient">
+    <i class="bi bi-plus-lg me-1"></i> New Scan
+  </a>
+</div>
+
+<div class="glass-card p-4">
+  {% if inspections %}
+  <div class="table-responsive">
+    <table class="table table-custom align-middle text-white">
+      <thead>
+        <tr>
+          <th class="text-white fw-bold">ID</th>
+          <th class="text-white fw-bold">Product Name</th>
+          <th class="text-white fw-bold">Manufacturer</th>
+          <th class="text-white fw-bold">Barcode / GTIN</th>
+          <th class="text-white fw-bold">Score</th>
+          <th class="text-white fw-bold">Overall Status</th>
+          <th class="text-white fw-bold">Date Scanned</th>
+          <th class="text-white fw-bold">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="text-white">
+        {% for i in inspections %}
+        <tr class="text-white">
+          <td class="font-monospace text-white">#{{ i.id }}</td>
+          <td class="fw-semibold text-white">{{ i.product_name or 'Unidentified Item' }}</td>
+          <td class="text-white-50 small">{{ i.manufacturer_name or 'N/A' }}</td>
+          <td><span class="font-monospace fs-7 text-info bg-dark px-2 py-1 rounded border border-secondary">{{ i.barcode or 'N/A' }}</span></td>
+          <td><span class="fw-bold text-white">{{ i.compliance_score }}%</span></td>
+          <td>
+            {% if i.overall_status == 'COMPLIANT' %}
+              <span class="badge-status badge-compliant">COMPLIANT</span>
+            {% elif i.overall_status == 'NEEDS REVIEW' %}
+              <span class="badge-status badge-review">NEEDS REVIEW</span>
+            {% else %}
+              <span class="badge-status badge-non-compliant">NON-COMPLIANT</span>
+            {% endif %}
+          </td>
+          <td class="text-white-50 small">{{ i.created_at }}</td>
+          <td>
+            <div class="btn-group">
+              <a href="/result/{{ i.id }}" class="btn btn-sm btn-outline-info text-white" title="View Results"><i class="bi bi-eye"></i> View</a>
+              <a href="/report/{{ i.id }}" class="btn btn-sm btn-outline-light" title="PDF Report"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-inbox fs-1 text-white-50 d-block mb-2"></i>
+      <p class="text-white-50 fs-6">No scan records found in database.</p>
+      <a href="/" class="btn btn-sm btn-outline-info text-white">Start First Scan</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

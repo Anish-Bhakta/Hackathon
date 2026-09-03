@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col">
+    <h2 class="fw-bold mb-1 text-white">Compliance Analytics Dashboard</h2>
+    <p class="text-white-50 small fs-6">Real-time stats and screening summary for packaged commodities.</p>
+  </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="glass-card p-3 text-center border-light border-opacity-25">
+      <div class="text-white small fw-bold text-uppercase">Total Inspections</div>
+      <div class="fs-2 fw-bold text-white my-1">{{ stats.total }}</div>
+      <div class="text-white-50 fs-7 fw-medium">Completed Scans</div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="glass-card p-3 text-center border-success border-opacity-50" style="background: rgba(16, 185, 129, 0.1);">
+      <div class="text-white small fw-bold text-uppercase">Compliant Items</div>
+      <div class="fs-2 fw-bold text-white my-1">{{ stats.compliant }}</div>
+      <div class="text-white-50 fs-7 fw-medium">100% Passed</div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="glass-card p-3 text-center border-warning border-opacity-50" style="background: rgba(245, 158, 11, 0.1);">
+      <div class="text-white small fw-bold text-uppercase">Needs Review</div>
+      <div class="fs-2 fw-bold text-white my-1">{{ stats.review }}</div>
+      <div class="text-white-50 fs-7 fw-medium">Manual Check Required</div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="glass-card p-3 text-center border-danger border-opacity-50" style="background: rgba(239, 68, 68, 0.1);">
+      <div class="text-white small fw-bold text-uppercase">Non-Compliant</div>
+      <div class="fs-2 fw-bold text-white my-1">{{ stats.non }}</div>
+      <div class="text-white-50 fs-7 fw-medium">Missing Mandatory Fields</div>
+    </div>
+  </div>
+</div>
+
+<!-- Average Compliance Rate Card -->
+<div class="glass-card p-4 mb-4">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h5 class="fw-bold mb-1 text-white">Overall Average Compliance Score</h5>
+      <p class="text-white-50 small mb-0">Calculated across all regulatory field checks.</p>
+    </div>
+    <div class="fs-1 fw-bold text-white bg-dark px-3 py-1 rounded border border-info border-opacity-50">
+      {{ stats.avg }}%
+    </div>
+  </div>
+</div>
+
+<!-- Recent Scans Table -->
+<div class="glass-card p-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h5 class="fw-bold mb-0 text-white"><i class="bi bi-clock-history me-2 text-info"></i> Recent Inspections</h5>
+    <a href="/history" class="btn btn-sm btn-outline-light px-3">View All</a>
+  </div>
+
+  {% if recent %}
+  <div class="table-responsive">
+    <table class="table table-custom align-middle text-white">
+      <thead>
+        <tr>
+          <th class="text-white fw-bold">ID</th>
+          <th class="text-white fw-bold">Product Name</th>
+          <th class="text-white fw-bold">Manufacturer</th>
+          <th class="text-white fw-bold">Barcode</th>
+          <th class="text-white fw-bold">Score</th>
+          <th class="text-white fw-bold">Status</th>
+          <th class="text-white fw-bold">Action</th>
+        </tr>
+      </thead>
+      <tbody class="text-white">
+        {% for r in recent %}
+        <tr class="text-white">
+          <td class="text-white font-monospace">#{{ r.id }}</td>
+          <td class="fw-semibold text-white">{{ r.product_name or 'Unidentified' }}</td>
+          <td class="text-white-50 small">{{ r.manufacturer_name or 'N/A' }}</td>
+          <td><span class="font-monospace fs-7 text-info bg-dark px-2 py-1 rounded border border-secondary">{{ r.barcode or 'N/A' }}</span></td>
+          <td><span class="fw-bold text-white">{{ r.compliance_score }}%</span></td>
+          <td>
+            {% if r.overall_status == 'COMPLIANT' %}
+              <span class="badge-status badge-compliant">COMPLIANT</span>
+            {% elif r.overall_status == 'NEEDS REVIEW' %}
+              <span class="badge-status badge-review">NEEDS REVIEW</span>
+            {% else %}
+              <span class="badge-status badge-non-compliant">NON-COMPLIANT</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="/result/{{ r.id }}" class="btn btn-sm btn-outline-info text-white">View Details</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="text-white-50 text-center py-4 my-0">No inspections recorded yet. Perform your first scan!</p>
+  {% endif %}
+</div>
+{% endblock %}

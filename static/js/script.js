@@ -1,0 +1,1 @@
+const input=document.getElementById("image"),p=document.getElementById("preview");if(input)input.onchange=()=>{let f=input.files[0];if(f){p.src=URL.createObjectURL(f);p.classList.remove("d-none")}};
