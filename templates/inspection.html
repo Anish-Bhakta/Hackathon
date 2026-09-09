@@ -31,8 +31,14 @@
       </thead>
       <tbody>
         {% for f in fields %}
-        <tr>
-          <td>{{ f.field_name.replace('_', ' ').title() }}</td>
+        {% set is_primary = f.field_name in ['mrp', 'manufacturing_date', 'expiry_date', 'net_quantity'] %}
+        <tr class="{% if is_primary %}table-active-row{% endif %}">
+          <td class="fw-bold">
+            {{ f.field_name.replace('_', ' ').title() }}
+            {% if is_primary %}
+              <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;"><i class="bi bi-star-fill"></i> Core Field</span>
+            {% endif %}
+          </td>
           <td class="font-monospace text-info">{{ f.extracted_value or '-' }}</td>
           <td><span class="badge bg-dark border text-light">{{ f.status }}</span></td>
           <td class="text-secondary small">{{ f.validation_message }}</td>

@@ -1,7 +1,7 @@
 import re
 import cv2
 import pytesseract
-from .preprocess import preprocess
+from .preprocess import preprocess, get_ocr_image_variants
 from config import Config
 
 try:
@@ -9,6 +9,26 @@ try:
     HAS_PYZBAR = True
 except Exception:
     HAS_PYZBAR = False
+
+
+def auto_orient_image(image):
+    """Detect text orientation and rotate image upright if rotated."""
+    if image is None:
+        return image
+    try:
+        osd = pytesseract.image_to_osd(image)
+        rotate_match = re.search(r"Rotate:\s*(\d+)", osd)
+        if rotate_match:
+            angle = int(rotate_match.group(1))
+            if angle == 90:
+                return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+            elif angle == 180:
+                return cv2.rotate(image, cv2.ROTATE_180)
+            elif angle == 270:
+                return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    except Exception:
+        pass
+    return image
 
 
 def detect_barcode(path):
@@ -26,7 +46,6 @@ def detect_barcode(path):
                 if code_str:
                     return code_str
 
-            # Grayscale check
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             decoded_objects = pyzbar.decode(gray)
             for obj in decoded_objects:
@@ -41,7 +60,12 @@ def detect_barcode(path):
         qr_detector = cv2.QRCodeDetector()
         barcode_detector = cv2.barcode.BarcodeDetector()
 
-        for img_variant in [image, cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE), cv2.rotate(image, cv2.ROTATE_180)]:
+        for img_variant in [
+            image,
+            cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE),
+            cv2.rotate(image, cv2.ROTATE_180),
+            cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE),
+        ]:
             val, _, _ = qr_detector.detectAndDecode(img_variant)
             if val and val.strip():
                 return val.strip()
@@ -59,47 +83,65 @@ def detect_barcode(path):
     return ""
 
 
+def filter_camera_watermarks(line):
+    """Filter out mobile device camera watermarks like '2 Sept 2026 4:42 pm' or 'motorola edge'."""
+    if re.search(
+        r"(?:motorola|shot on|edge \d+|redmi|realme|iphone|samsung|galaxy|\d{1,2}\s+[A-Za-z]{3,9}\s+20\d{2}\s+\d{1,2}:\d{2})",
+        line,
+        re.I,
+    ):
+        return True
+    return False
+
+
 def scan_image(path):
     if Config.TESSERACT_CMD:
         pytesseract.pytesseract.tesseract_cmd = Config.TESSERACT_CMD
 
     barcode = detect_barcode(path)
 
-    # Multi-pass OCR for dark bottles, white text, and white stamp boxes
-    ocr_texts = []
-    
-    img = cv2.imread(path)
-    if img is not None:
-        # Resize if small
-        h, w = img.shape[:2]
-        if max(h, w) < 1600:
-            scale = 1600 / max(h, w)
-            img = cv2.resize(img, None, fx=scale, fy=scale)
+    # 1. Image loading & Auto Orientation
+    image = cv2.imread(path)
+    if image is not None:
+        image = auto_orient_image(image)
 
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        
-        # Inverted image (essential for white text on dark black bottles)
-        inverted = cv2.bitwise_not(gray)
+    variants = get_ocr_image_variants(path)
+    if not variants and image is not None:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        variants = [("default_gray", gray)]
 
-        # Thresholded image
-        thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+    ocr_pass_texts = []
+    seen_lines = set()
+    dedup_lines = []
 
-        for target_img in [gray, thresh, inverted]:
-            for psm in ["--psm 3", "--psm 6", "--psm 11"]:
-                try:
-                    t = pytesseract.image_to_string(target_img, lang="eng", config=psm)
-                    if t and len(t.strip()) > 10:
-                        ocr_texts.append(t.strip())
-                except Exception:
-                    pass
+    # 2. Multi-pass Tesseract OCR over image variants & PSM modes
+    psm_modes = ["--psm 6", "--psm 3", "--psm 11", "--psm 4"]
 
-    combined_text = "\n\n".join(ocr_texts) if ocr_texts else ""
-    raw_ocr = ocr_texts[0] if ocr_texts else ""
+    for name, target_img in variants:
+        # Avoid running all 4 PSMs on every grid ROI to keep scanning fast
+        current_psms = ["--psm 6", "--psm 11"] if "roi" in name or "br_" in name else psm_modes
+        for psm in current_psms:
+            try:
+                text = pytesseract.image_to_string(target_img, lang="eng", config=f"{psm} --oem 3")
+                if text and len(text.strip()) > 5:
+                    ocr_pass_texts.append(text.strip())
+                    for raw_line in text.splitlines():
+                        line = raw_line.strip()
+                        if len(line) >= 2 and not filter_camera_watermarks(line):
+                            normalized = re.sub(r"\s+", " ", line.lower())
+                            if normalized not in seen_lines:
+                                seen_lines.add(normalized)
+                                dedup_lines.append(line)
+            except Exception:
+                pass
 
-    clean = re.sub(r"[ \t]+", " ", combined_text)
+    raw_ocr = ocr_pass_texts[0] if ocr_pass_texts else ""
+    combined_ocr = "\n".join(dedup_lines) if dedup_lines else "\n\n".join(ocr_pass_texts)
+
+    clean = re.sub(r"[ \t]+", " ", combined_ocr)
     clean = re.sub(r"\n{3,}", "\n\n", clean).strip()
 
-    # Fallback: Find 8-14 digit GTIN in OCR text if barcode graphic was unreadable
+    # Fallback GTIN extraction if barcode graphics were unreadable
     if not barcode and clean:
         digit_matches = re.findall(r"\b\d{8,14}\b", clean)
         if digit_matches:

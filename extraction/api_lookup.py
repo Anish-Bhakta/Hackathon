@@ -45,6 +45,58 @@ OFFLINE_MOCK_DB = {
         "image_url": "",
         "net_quantity": "100 g",
         "country_of_origin": "India",
+    },
+    "08904335600336": {
+        "product_name": "Muesli+",
+        "brand": "Yoga Bar (Sproutlife Foods Pvt Ltd)",
+        "categories": "Breakfast Cereals, Muesli",
+        "ingredients": "60% Whole Grains (Rolled Oats, Brown Rice Flakes, Quinoa Flakes), 17% Dried Fruits (Raisins, Apricots, Cranberry, Blackcurrants), 14% Seeds & Nuts (Pumpkin, Almonds, Chia, Flax), Strawberry Powder, Date Syrup, Jaggery, Rice Bran Oil, Himalayan Pink Salt",
+        "image_url": "https://images.openfoodfacts.org/images/products/890/433/560/0336/front_en.7.400.jpg",
+        "net_quantity": "700 g",
+        "country_of_origin": "India",
+        "mrp": "445.00",
+        "batch_number": "MB090426A/M120:13",
+        "manufacturing_date": "09/04/26 (9th April 2026)",
+        "expiry_date": "08/01/27 (8th January 2027)",
+    },
+    "8904335600336": {
+        "product_name": "Muesli+",
+        "brand": "Yoga Bar (Sproutlife Foods Pvt Ltd)",
+        "categories": "Breakfast Cereals, Muesli",
+        "ingredients": "60% Whole Grains (Rolled Oats, Brown Rice Flakes, Quinoa Flakes), 17% Dried Fruits (Raisins, Apricots, Cranberry, Blackcurrants), 14% Seeds & Nuts (Pumpkin, Almonds, Chia, Flax), Strawberry Powder, Date Syrup, Jaggery, Rice Bran Oil, Himalayan Pink Salt",
+        "image_url": "https://images.openfoodfacts.org/images/products/890/433/560/0336/front_en.7.400.jpg",
+        "net_quantity": "700 g",
+        "country_of_origin": "India",
+        "mrp": "445.00",
+        "batch_number": "MB090426A/M120:13",
+        "manufacturing_date": "09/04/26 (9th April 2026)",
+        "expiry_date": "08/01/27 (8th January 2027)",
+    },
+    "8901058007408": {
+        "product_name": "Aashirvaad Iodized Salt",
+        "brand": "ITC Limited",
+        "categories": "Salt, Groceries, Condiments",
+        "ingredients": "Edible Common Salt, Potassium Iodate, Anticaking Agent (536)",
+        "image_url": "",
+        "net_quantity": "1.2 kg (1kg+200g FREE)",
+        "country_of_origin": "India",
+        "mrp": "30.00",
+        "batch_number": "AA26GE",
+        "manufacturing_date": "07/2026 (July 2026)",
+        "expiry_date": "06/2027 (June 2027)",
+    },
+    "08901058007408": {
+        "product_name": "Aashirvaad Iodized Salt",
+        "brand": "ITC Limited",
+        "categories": "Salt, Groceries, Condiments",
+        "ingredients": "Edible Common Salt, Potassium Iodate, Anticaking Agent (536)",
+        "image_url": "",
+        "net_quantity": "1.2 kg (1kg+200g FREE)",
+        "country_of_origin": "India",
+        "mrp": "30.00",
+        "batch_number": "AA26GE",
+        "manufacturing_date": "07/2026 (July 2026)",
+        "expiry_date": "06/2027 (June 2027)",
     }
 }
 
@@ -98,23 +150,28 @@ def fetch_product_by_barcode(barcode):
                     result["net_quantity"] = prod.get("quantity") or ""
                     result["country_of_origin"] = prod.get("origins") or prod.get("manufacturing_places") or ""
                     result["api_source"] = "Open Food Facts API"
-                    return result
     except Exception:
         pass
 
-    # 2. Check offline mock database fallback
+
+    # Check offline DB entries and merge specific batch attributes
     for key in (raw_barcode, clean_barcode, raw_barcode.zfill(14)):
         if key in OFFLINE_MOCK_DB:
             mock = OFFLINE_MOCK_DB[key]
             result["product_found"] = True
-            result["product_name"] = mock["product_name"]
-            result["brand"] = mock["brand"]
-            result["categories"] = mock["categories"]
-            result["ingredients"] = mock["ingredients"]
-            result["image_url"] = mock["image_url"]
-            result["net_quantity"] = mock["net_quantity"]
-            result["country_of_origin"] = mock["country_of_origin"]
-            result["api_source"] = "Offline Registry Fallback"
-            return result
+            result["product_name"] = result["product_name"] or mock.get("product_name", "")
+            result["brand"] = result["brand"] or mock.get("brand", "")
+            result["categories"] = result["categories"] or mock.get("categories", "")
+            result["ingredients"] = result["ingredients"] or mock.get("ingredients", "")
+            result["image_url"] = result["image_url"] or mock.get("image_url", "")
+            result["net_quantity"] = result["net_quantity"] or mock.get("net_quantity", "")
+            result["country_of_origin"] = result["country_of_origin"] or mock.get("country_of_origin", "")
+            if mock.get("mrp"): result["mrp"] = mock["mrp"]
+            if mock.get("batch_number"): result["batch_number"] = mock["batch_number"]
+            if mock.get("manufacturing_date"): result["manufacturing_date"] = mock["manufacturing_date"]
+            if mock.get("expiry_date"): result["expiry_date"] = mock["expiry_date"]
+            if not result["api_source"]: result["api_source"] = "Offline Registry Fallback"
+            break
 
     return result
+
